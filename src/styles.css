@@ -1,0 +1,80 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+
+  --color-background: #f3efe6;
+  --color-foreground: #1c1915;
+  --color-card: #fffdf8;
+  --color-card-foreground: #1c1915;
+  --color-popover: #fffdf8;
+  --color-popover-foreground: #1c1915;
+  --color-primary: #1e5c4a;
+  --color-primary-foreground: #f3efe6;
+  --color-secondary: #ebe4d6;
+  --color-secondary-foreground: #1c1915;
+  --color-muted: #ebe4d6;
+  --color-muted-foreground: #6b6459;
+  --color-accent: #e4dccb;
+  --color-accent-foreground: #1c1915;
+  --color-destructive: #9b2c2c;
+  --color-destructive-foreground: #f3efe6;
+  --color-border: #ddd4c4;
+  --color-input: #ddd4c4;
+  --color-ring: #1e5c4a;
+  --color-sidebar: #1c1915;
+  --color-sidebar-foreground: #f3efe6;
+  --color-sidebar-muted: #9a9286;
+  --color-sidebar-accent: #2a2621;
+  --color-paper: #fffdf8;
+  --color-ink: #1c1915;
+  --color-warn: #8a5a12;
+  --color-ok: #1e5c4a;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius: 12px;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+    letter-spacing: -0.03em;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
