@@ -62,3 +62,14 @@ export function loyaltyApply(opts: {
     earnedPoints: loyaltyEarnPoints(dueCents),
   };
 }
+
+export function cycleCountDelta(onHand: number, counted: number) {
+  if (!Number.isFinite(onHand) || !Number.isFinite(counted)) return 0;
+  return Math.trunc(counted) - Math.trunc(onHand);
+}
+
+export function stockFlag(quantity: number, reorderPoint: number): "out" | "low" | "ok" {
+  if (quantity <= 0) return "out";
+  if (quantity <= reorderPoint) return "low";
+  return "ok";
+}
