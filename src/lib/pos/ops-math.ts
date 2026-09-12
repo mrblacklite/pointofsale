@@ -94,3 +94,9 @@ export function lineRefundCents(lineTotalCents: number, soldQty: number, returnQ
 export function poOpenQty(ordered: number, received: number) {
   return Math.max(0, Math.trunc(ordered) - Math.max(0, Math.trunc(received)));
 }
+
+/** Price per pound * hundredths of a pound. 250 = 2.50 lb. */
+export function weighLineCents(pricePerLbCents: number, lbsHundredths: number) {
+  if (!Number.isFinite(pricePerLbCents) || !Number.isFinite(lbsHundredths) || lbsHundredths <= 0) return 0;
+  return Math.round((pricePerLbCents * Math.trunc(lbsHundredths)) / 100);
+}
