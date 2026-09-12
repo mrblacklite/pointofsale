@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   barcodeUsable,
   clockHours,
+  cycleCountDelta,
   discountWindowOpen,
   giftCardUsable,
   loyaltyApply,
@@ -10,6 +11,7 @@ import {
   loyaltyRedeemCents,
   shiftDifference,
   shiftExpected,
+  stockFlag,
 } from "./ops-math.ts";
 
 describe("shifts", () => {
@@ -61,6 +63,20 @@ describe("loyalty", () => {
     assert.equal(applied.redeemCents, 400);
     assert.equal(applied.dueCents, 1100);
     assert.equal(applied.earnedPoints, 11);
+  });
+});
+
+describe("inventory counts", () => {
+  it("posts the difference between counted and on-hand", () => {
+    assert.equal(cycleCountDelta(12, 10), -2);
+    assert.equal(cycleCountDelta(0, 8), 8);
+    assert.equal(cycleCountDelta(5, 5), 0);
+  });
+
+  it("flags out / low / ok from reorder point", () => {
+    assert.equal(stockFlag(0, 4), "out");
+    assert.equal(stockFlag(3, 4), "low");
+    assert.equal(stockFlag(8, 4), "ok");
   });
 });
 
