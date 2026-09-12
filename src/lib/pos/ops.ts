@@ -16,8 +16,10 @@ export const listCustomers = createServerFn({ method: "GET" })
       email: string | null;
       phone: string | null;
       loyalty_points: number;
+      credit_cents: number;
+      note: string | null;
     }>`
-      select id, name, email, phone, loyalty_points
+      select id, name, email, phone, loyalty_points, coalesce(credit_cents,0)::int as credit_cents, note
       from customers
       where store_id = ${store.id}
         and (${q} = '' or name ilike ${"%" + q + "%"} or coalesce(email,'') ilike ${"%" + q + "%"} or coalesce(phone,'') ilike ${"%" + q + "%"})
@@ -30,6 +32,8 @@ export const listCustomers = createServerFn({ method: "GET" })
       email: r.email,
       phone: r.phone,
       loyaltyPoints: n(r.loyalty_points),
+      creditCents: n(r.credit_cents),
+      note: r.note,
     }));
   });
 
@@ -172,4 +176,75 @@ export const salesReport = createServerFn({ method: "GET" })
       byCashier: byCashier.map((r) => ({ name: r.cashier_name, cents: n(r.cents), count: n(r.count) })),
       taxCents: n(tax[0]?.tax),
     };
+  });
+
+export const getCustomerHistory = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator(z.object({ id: z.string() }))
+  .handler(async ({ context, data }) => {
+    const { sql, store } = await requirePos(context.userId, "sales");
+    const cust = await sql<{
+      id: string;
+      name: string;
+      email: string | null;
+      phone: string | null;
+      loyalty_points: number;
+      credit_cents: number;
+      note: string | null;
+    }>`
+      select id, name, email, phone, loyalty_points, coalesce(credit_cents,0)::int as credit_cents, note
+      from customers where id = ${data.id} and store_id = ${store.id}
+    `;
+    if (!cust[0]) throw new Error("Customer not found.");
+    const sales = await sql<{
+      id: string;
+      receipt_number: number;
+      total_cents: number;
+      status: string;
+      created_at: unknown;
+      earned: number;
+      redeemed: number;
+    }>`
+      select id, receipt_number, total_cents, status, created_at,
+        coalesce(loyalty_points_earned,0)::int as earned,
+        coalesce(loyalty_points_redeemed,0)::int as redeemed
+      from sales
+      where store_id = ${store.id} and customer_id = ${data.id}
+      order by created_at desc
+      limit 50
+    `;
+    return {
+      id: cust[0].id,
+      name: cust[0].name,
+      email: cust[0].email,
+      phone: cust[0].phone,
+      loyaltyPoints: n(cust[0].loyalty_points),
+      creditCents: n(cust[0].credit_cents),
+      note: cust[0].note,
+      sales: sales.map((s) => ({
+        id: s.id,
+        receiptNumber: n(s.receipt_number),
+        totalCents: n(s.total_cents),
+        status: s.status,
+        createdAt: String(s.created_at),
+        pointsEarned: n(s.earned),
+        pointsRedeemed: n(s.redeemed),
+      })),
+    };
+  });
+
+export const adjustLoyaltyPoints = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ customerId: z.string(), delta: z.number().int() }))
+  .handler(async ({ context, data }) => {
+    const { sql, store } = await requirePos(context.userId, "staff");
+    const updated = await sql<{ loyalty_points: number }>`
+      update customers
+      set loyalty_points = loyalty_points + ${data.delta}
+      where id = ${data.customerId} and store_id = ${store.id}
+        and loyalty_points + ${data.delta} >= 0
+      returning loyalty_points
+    `;
+    if (!updated[0]) throw new Error("Customer not found or points would go negative.");
+    return { loyaltyPoints: n(updated[0].loyalty_points) };
   });

@@ -32,7 +32,7 @@ const NAV: Array<{ to: string; label: string; icon: typeof LayoutDashboard; perm
   { to: "/discounts", label: "Discounts", icon: Tag, perm: "discounts" },
   { to: "/gift-cards", label: "Gift cards", icon: Gift, perm: "gift_cards" },
   { to: "/staff", label: "Staff", icon: Users, perm: "staff" },
-  { to: "/customers", label: "Customers", icon: Users, perm: "staff" },
+  { to: "/customers", label: "Customers", icon: Users, perm: "sales" },
   { to: "/developers", label: "API", icon: KeyRound, perm: "api_keys" },
   { to: "/settings", label: "Store", icon: Settings, perm: "settings" },
 ];
