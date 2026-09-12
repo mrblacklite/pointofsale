@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createCategory, listCategories, listProducts, saveProduct } from "@/lib/pos/actions";
+import { deleteProductOption, listProductOptions, saveProductOption } from "@/lib/pos/catalog-options";
 import { can } from "@/lib/pos/roles";
 import type { Product } from "@/lib/pos/types";
 import { formatMoney, parseMoneyToCents } from "@/lib/utils";
@@ -73,7 +74,6 @@ function Catalog() {
           </Button>
         </div>
       </div>
-
       <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="border-b border-border text-xs tracking-wide text-muted-foreground uppercase">
@@ -88,40 +88,28 @@ function Catalog() {
           </thead>
           <tbody>
             {products.data?.map((p) => (
-              <tr
-                key={p.id}
-                className="cursor-pointer border-b border-border last:border-0 hover:bg-secondary/60"
-                onClick={() => setEditing(p)}
-              >
+              <tr key={p.id} className="cursor-pointer border-b border-border last:border-0 hover:bg-secondary/60" onClick={() => setEditing(p)}>
                 <td className="px-4 py-3">
                   <div className="font-medium">{p.name}</div>
                   <div className="font-mono text-xs text-muted-foreground">{p.barcode}</div>
                 </td>
                 <td className="px-4 py-3 font-mono text-xs">{p.sku}</td>
                 <td className="px-4 py-3 text-muted-foreground">{p.categoryName ?? "—"}</td>
-                <td className="px-4 py-3 text-right font-mono tabular-nums">{formatMoney(p.priceCents)}</td>
+                <td className="px-4 py-3 text-right font-mono tabular-nums">{formatMoney(p.priceCents)}{p.soldBy === "weight" ? "/lb" : ""}</td>
                 <td className="px-4 py-3 text-right font-mono tabular-nums">{p.trackInventory ? p.quantity : "—"}</td>
-                <td className="px-4 py-3">
-                  {p.active ? <Badge>Active</Badge> : <Badge variant="muted">Hidden</Badge>}
-                </td>
+                <td className="px-4 py-3">{p.active ? <Badge>Active</Badge> : <Badge variant="muted">Hidden</Badge>}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
       <Dialog open={Boolean(editing)} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing?.id ? "Edit product" : "New product"}</DialogTitle>
           </DialogHeader>
           {editing ? (
-            <ProductForm
-              product={editing}
-              categories={cats.data ?? []}
-              busy={save.isPending}
-              onSubmit={(data) => save.mutate(data)}
-            />
+            <ProductForm product={editing} categories={cats.data ?? []} busy={save.isPending} onSubmit={(data) => save.mutate(data)} />
           ) : null}
         </DialogContent>
       </Dialog>
@@ -152,7 +140,8 @@ function ProductForm({
   const [taxExempt, setTaxExempt] = useState(Boolean(product.taxExempt));
   const [track, setTrack] = useState(product.trackInventory !== false);
   const [active, setActive] = useState(product.active !== false);
-
+  const [soldBy, setSoldBy] = useState<"each" | "weight">(product.soldBy === "weight" ? "weight" : "each");
+  const [imageUrl, setImageUrl] = useState(product.imageUrl ?? "");
   return (
     <form
       className="grid gap-3"
@@ -172,64 +161,45 @@ function ProductForm({
           taxExempt,
           trackInventory: track,
           active,
+          soldBy,
+          imageUrl: imageUrl || null,
         });
       }}
     >
-      <Field label="Name">
-        <Input value={name} onChange={(e) => setName(e.target.value)} required />
-      </Field>
+      <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} required /></Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="SKU">
-          <Input className="font-mono" value={sku} onChange={(e) => setSku(e.target.value)} required />
-        </Field>
-        <Field label="Barcode">
-          <Input className="font-mono" value={barcode} onChange={(e) => setBarcode(e.target.value)} />
-        </Field>
+        <Field label="SKU"><Input className="font-mono" value={sku} onChange={(e) => setSku(e.target.value)} required /></Field>
+        <Field label="Barcode"><Input className="font-mono" value={barcode} onChange={(e) => setBarcode(e.target.value)} /></Field>
       </div>
       <Field label="Category">
         <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
           <option value="">Uncategorized</option>
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
+            <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </Select>
       </Field>
-      <Field label="Description">
-        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+      <Field label="Description"><Textarea value={description} onChange={(e) => setDescription(e.target.value)} /></Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Price"><Input value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
+        <Field label="Cost"><Input value={cost} onChange={(e) => setCost(e.target.value)} /></Field>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="On hand"><Input value={quantity} onChange={(e) => setQuantity(e.target.value)} /></Field>
+        <Field label="Reorder at"><Input value={reorder} onChange={(e) => setReorder(e.target.value)} /></Field>
+      </div>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={track} onChange={(e) => setTrack(e.target.checked)} />Track inventory</label>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={taxExempt} onChange={(e) => setTaxExempt(e.target.checked)} />Tax exempt</label>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />Active on the register</label>
+      <Field label="Sold by">
+        <Select value={soldBy} onChange={(e) => setSoldBy(e.target.value as "each" | "weight")}>
+          <option value="each">Each</option>
+          <option value="weight">By the pound</option>
+        </Select>
       </Field>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Price">
-          <Input value={price} onChange={(e) => setPrice(e.target.value)} />
-        </Field>
-        <Field label="Cost">
-          <Input value={cost} onChange={(e) => setCost(e.target.value)} />
-        </Field>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="On hand">
-          <Input value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-        </Field>
-        <Field label="Reorder at">
-          <Input value={reorder} onChange={(e) => setReorder(e.target.value)} />
-        </Field>
-      </div>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={track} onChange={(e) => setTrack(e.target.checked)} />
-        Track inventory
-      </label>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={taxExempt} onChange={(e) => setTaxExempt(e.target.checked)} />
-        Tax exempt
-      </label>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
-        Active on the register
-      </label>
-      <Button type="submit" disabled={busy}>
-        {busy ? "Saving…" : "Save product"}
-      </Button>
+      <Field label="Image URL"><Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://" /></Field>
+      {product.id ? <OptionEditor productId={product.id} /> : null}
+      <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save product"}</Button>
     </form>
   );
 }
@@ -239,6 +209,61 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div className="grid gap-1.5">
       <Label>{label}</Label>
       {children}
+    </div>
+  );
+}
+
+function OptionEditor({ productId }: { productId: string }) {
+  const qc = useQueryClient();
+  const opts = useQuery({
+    queryKey: ["product-options", productId],
+    queryFn: () => listProductOptions({ data: { productId } }),
+  });
+  const [kind, setKind] = useState<"variant" | "modifier">("variant");
+  const [name, setName] = useState("");
+  const [delta, setDelta] = useState("0");
+  const add = useMutation({
+    mutationFn: () =>
+      saveProductOption({
+        data: { productId, kind, name, priceDeltaCents: Math.round(Number.parseFloat(delta || "0") * 100) },
+      }),
+    onSuccess: () => {
+      setName("");
+      void qc.invalidateQueries({ queryKey: ["product-options", productId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const del = useMutation({
+    mutationFn: (id: string) => deleteProductOption({ data: { id } }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["product-options", productId] }),
+  });
+  return (
+    <div className="grid gap-2 rounded-lg border border-border p-3">
+      <div className="text-sm font-medium">Variants & modifiers</div>
+      <ul className="space-y-1 text-sm">
+        {opts.data?.map((o) => (
+          <li key={o.id} className="flex justify-between gap-2">
+            <span>
+              {o.kind}: {o.name} ({o.priceDeltaCents >= 0 ? "+" : ""}
+              {(o.priceDeltaCents / 100).toFixed(2)})
+            </span>
+            <button type="button" className="text-xs text-muted-foreground" onClick={() => del.mutate(o.id)}>
+              Remove
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="grid grid-cols-3 gap-2">
+        <Select value={kind} onChange={(e) => setKind(e.target.value as "variant" | "modifier")}>
+          <option value="variant">Variant</option>
+          <option value="modifier">Modifier</option>
+        </Select>
+        <Input placeholder="Large / Extra shot" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input placeholder="+$" value={delta} onChange={(e) => setDelta(e.target.value)} />
+      </div>
+      <Button type="button" variant="outline" disabled={!name.trim() || add.isPending} onClick={() => add.mutate()}>
+        Add option
+      </Button>
     </div>
   );
 }
