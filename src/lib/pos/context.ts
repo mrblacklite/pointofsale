@@ -71,6 +71,49 @@ export async function requirePos(userId: string, permission?: Permission): Promi
   return { sql, store, member, seeded };
 }
 
+async function attachCustomer(
+  sql: Sql,
+  userId: string,
+  email: string,
+  displayName: string,
+  storeRow: {
+    id: string;
+    name: string;
+    legal_name: string | null;
+    address: string | null;
+    phone: string | null;
+    tax_rate_bps: number;
+    currency: string;
+    receipt_footer: string | null;
+  },
+) {
+  const memberId = newId();
+  await sql`
+    insert into store_members (id, store_id, user_id, email, display_name, role, active)
+    values (${memberId}, ${storeRow.id}, ${userId}, ${email || `${userId}@till.local`}, ${displayName}, ${"customer"}, true)
+  `;
+  if (email) {
+    await sql`
+      insert into customers (id, store_id, user_id, name, email)
+      values (${newId()}, ${storeRow.id}, ${userId}, ${displayName}, ${email})
+      on conflict do nothing
+    `;
+  }
+  return {
+    seeded: false,
+    member: mapMember({
+      id: memberId,
+      store_id: storeRow.id,
+      user_id: userId,
+      email: email || `${userId}@till.local`,
+      display_name: displayName,
+      role: "customer",
+      active: true,
+    }),
+    store: mapStore(storeRow),
+  };
+}
+
 async function ensureMembership(sql: Sql, userId: string) {
   const existing = await sql<{
     id: string;
@@ -118,6 +161,7 @@ async function ensureMembership(sql: Sql, userId: string) {
 
   const user = await loadAuthUser(sql, userId);
   const email = (user.email ?? "").trim().toLowerCase();
+  const displayName = user.name?.trim() || email.split("@")[0] || "Guest";
 
   if (email) {
     const invite = await sql<{
@@ -171,8 +215,26 @@ async function ensureMembership(sql: Sql, userId: string) {
     }
   }
 
+  const stores = await sql<{
+    id: string;
+    name: string;
+    legal_name: string | null;
+    address: string | null;
+    phone: string | null;
+    tax_rate_bps: number;
+    currency: string;
+    receipt_footer: string | null;
+  }>`
+    select id, name, legal_name, address, phone, tax_rate_bps, currency, receipt_footer
+    from stores
+    order by created_at asc
+    limit 1
+  `;
+  if (stores[0]) {
+    return attachCustomer(sql, userId, email, displayName, stores[0]);
+  }
+
   const storeId = newId();
-  const displayName = user.name?.trim() || email.split("@")[0] || "Owner";
   const storeName = displayName.endsWith("s") ? `${displayName}' Market` : `${displayName}'s Market`;
 
   await sql`
