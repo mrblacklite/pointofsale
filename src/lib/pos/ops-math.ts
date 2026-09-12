@@ -62,3 +62,10 @@ export function loyaltyApply(opts: {
     earnedPoints: loyaltyEarnPoints(dueCents),
   };
 }
+
+export function clockHours(clockedInAt: Date, clockedOutAt: Date | null, now: Date) {
+  const end = clockedOutAt ?? now;
+  const ms = end.getTime() - clockedInAt.getTime();
+  if (!Number.isFinite(ms) || ms <= 0) return 0;
+  return ms / 3_600_000;
+}
