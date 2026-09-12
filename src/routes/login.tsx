@@ -58,14 +58,14 @@ function Login() {
         <span className="font-display text-3xl tracking-tight">Till</span>
         <div className="max-w-md">
           <h1 className="font-display text-5xl leading-[1.05] tracking-tight">
-            The counter, kept honest.
+            Your receipts. Your credit.
           </h1>
           <p className="mt-5 text-base text-sidebar-muted">
-            Ring sales, watch stock, issue gift cards, and open the same register from a desktop
-            program through the sales API.
+            Create a customer account to see purchases assigned to you and any store credit the
+            shop adds. Staff are invited by an admin.
           </p>
         </div>
-        <p className="text-sm text-sidebar-muted">Paper tickets. Forest ink. One store per account.</p>
+        <p className="text-sm text-sidebar-muted">One shop. Customer accounts by default.</p>
       </section>
 
       <section className="flex items-center justify-center px-5 py-10">
@@ -74,12 +74,12 @@ function Login() {
             Till
           </Link>
           <h2 className="mt-6 font-display text-3xl tracking-tight">
-            {mode === "in" ? "Sign in" : "Create a store"}
+            {mode === "in" ? "Sign in" : "Create a customer account"}
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             {mode === "in"
-              ? "Staff use the email an admin assigned. Owners can also continue with Google or X."
-              : "You’ll become the admin of a seeded market you can edit."}
+              ? "Customers and staff use the email on their account. Google and X work too."
+              : "This creates a customer account for this shop. An admin can promote you to cashier later."}
           </p>
 
           {authEnabled ? (
@@ -137,7 +137,7 @@ function Login() {
             </div>
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <Button type="submit" disabled={busy || !authEnabled}>
-              {busy ? "Working…" : mode === "in" ? "Sign in" : "Create account"}
+              {busy ? "Working…" : mode === "in" ? "Sign in" : "Create customer account"}
             </Button>
           </form>
 
@@ -149,7 +149,7 @@ function Login() {
               setError(null);
             }}
           >
-            {mode === "in" ? "Need a store? Create an account" : "Already on staff? Sign in"}
+            {mode === "in" ? "New here? Create a customer account" : "Already have an account? Sign in"}
           </button>
         </div>
       </section>

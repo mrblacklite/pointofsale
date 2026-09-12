@@ -85,21 +85,21 @@ function Landing() {
       <section className="mx-auto grid max-w-5xl gap-10 px-5 py-10 md:grid-cols-2 md:items-center md:py-20">
         <div>
           <p className="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase">
-            Point of sale
+            Customer account
           </p>
           <h1 className="mt-3 font-display text-4xl leading-[1.05] tracking-tight md:text-6xl">
-            The counter, kept honest.
+            Shop with an account.
           </h1>
           <p className="mt-5 max-w-md text-base text-muted-foreground">
-            Ring sales, watch inventory, issue gift cards, and run the same register from a
-            desktop program through the sales API.
+            Create a customer account to track purchases assigned to you and any store credit
+            the shop adds. Staff are invited separately by an admin.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg">
-              <Link to="/login">Open a store</Link>
+              <Link to="/login">Create a customer account</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link to="/login">Staff sign in</Link>
+              <Link to="/login">Sign in</Link>
             </Button>
           </div>
         </div>
