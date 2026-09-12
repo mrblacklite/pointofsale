@@ -1,4 +1,4 @@
-export const ROLES = ["admin", "supervisor", "cashier", "stocker"] as const;
+export const ROLES = ["admin", "supervisor", "cashier", "stocker", "customer"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_LABEL: Record<Role, string> = {
@@ -6,6 +6,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   supervisor: "Supervisor",
   cashier: "Cashier",
   stocker: "Stocker",
+  customer: "Customer",
 };
 
 export const ROLE_BLURB: Record<Role, string> = {
@@ -13,6 +14,7 @@ export const ROLE_BLURB: Record<Role, string> = {
   supervisor: "Register, voids, discounts, gift cards, catalog, and reports.",
   cashier: "Ring sales, look up gift cards. Cannot edit catalog or staff.",
   stocker: "Products, receiving, and inventory counts. No register.",
+  customer: "Account only. No register until an admin assigns a staff role.",
 };
 
 const PERMISSIONS = {
