@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { newId } from "@/lib/utils";
-import { n, requirePos } from "./context";
+import { requirePos } from "./context";
 import { clockHours } from "./ops-math";
 
 export const myClockStatus = createServerFn({ method: "GET" })
@@ -56,9 +56,9 @@ export const clockOut = createServerFn({ method: "POST" })
 export const listTimeClock = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator(z.object({ days: z.number().int().min(1).max(90).optional() }).optional())
-  .handler(async ({ context, data }) => {
+  .handler(async ({ context }) => {
     const { sql, store, member } = await requirePos(context.userId, "sales");
-    const days = data?.days ?? 14;
+    const days = 14;
     const staffView = member.role === "admin" || member.role === "supervisor";
     const rows = await sql<{
       id: string;
@@ -71,7 +71,7 @@ export const listTimeClock = createServerFn({ method: "GET" })
       from time_clock tc
       left join "user" u on u.id = tc.user_id
       where tc.store_id = ${store.id}
-        and tc.clocked_in_at >= now() - (${days} || ' days')::interval
+        and tc.clocked_in_at >= now() - (${String(days)} || ' days')::interval
         and (${staffView} or tc.user_id = ${member.userId})
       order by tc.clocked_in_at desc
       limit 200
