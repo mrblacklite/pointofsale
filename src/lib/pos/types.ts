@@ -140,9 +140,14 @@ export type CompleteSaleInput = {
     method: "cash" | "card" | "gift_card";
     amountCents: number;
     giftCardCode?: string | null;
+    paymentMethodId?: string | null;
+    cardToken?: string | null;
   }>;
   tenderedCents?: number;
   note?: string | null;
+  tipCents?: number;
+  customerEmail?: string | null;
+  customerPhone?: string | null;
 };
 
 export type SaleResult = {
@@ -153,6 +158,9 @@ export type SaleResult = {
   taxCents: number;
   totalCents: number;
   changeCents: number;
+  tipCents: number;
+  customerEmail: string | null;
+  customerPhone: string | null;
   items: Array<{
     productId: string;
     sku: string;
