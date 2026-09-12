@@ -148,6 +148,8 @@ export type CompleteSaleInput = {
   tipCents?: number;
   customerEmail?: string | null;
   customerPhone?: string | null;
+  customerId?: string | null;
+  redeemPoints?: number;
 };
 
 export type SaleResult = {
