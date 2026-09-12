@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { getMyAccount } from "@/lib/pos/customer-account";
 import { getDashboard } from "@/lib/pos/actions";
 import { can } from "@/lib/pos/roles";
 import { formatMoney } from "@/lib/utils";
@@ -15,8 +16,61 @@ export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
   const { user, isPending } = useCurrentUserState();
+  const session = usePosSession();
   if (isPending || !user) return <Landing />;
+  if (session.data?.member.role === "customer") return <CustomerHome />;
   return <Dashboard />;
+}
+
+function CustomerHome() {
+  const account = useQuery({ queryKey: ["my-account"], queryFn: () => getMyAccount() });
+  return (
+    <AppShell title="Your account">
+      {!account.data ? (
+        <div className="grid gap-4 md:grid-cols-3">
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Stat label="Spent" value={formatMoney(account.data.spentCents)} hint={`${account.data.ticketCount} purchases`} />
+            <Stat label="Store credit" value={formatMoney(account.data.creditCents)} hint="Available balance" />
+            <Stat label="Account" value={account.data.name} hint={account.data.email ?? ""} />
+          </div>
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Your purchases</CardTitle>
+              <CardDescription>Tickets assigned to this account</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {account.data.purchases.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No purchases yet.</p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {account.data.purchases.map((p) => (
+                    <li key={p.id} className="flex items-center justify-between py-3 text-sm">
+                      <div>
+                        <div className="font-medium">#{p.receiptNumber}</div>
+                        <div className="text-muted-foreground">
+                          {p.itemCount} items · {p.createdAt.slice(0, 10)}
+                        </div>
+                      </div>
+                      <div className="text-right font-mono tabular-nums">
+                        {formatMoney(p.totalCents)}
+                        {p.status === "voided" ? <Badge variant="danger">Voided</Badge> : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </AppShell>
+  );
 }
 
 function Landing() {
@@ -87,7 +141,7 @@ function Dashboard() {
   const dash = useQuery({
     queryKey: ["dashboard"],
     queryFn: () => getDashboard(),
-    enabled: Boolean(session.data),
+    enabled: Boolean(session.data) && session.data?.member.role !== "customer",
   });
 
   return (
