@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   barcodeUsable,
+  clockHours,
   discountWindowOpen,
   giftCardUsable,
   loyaltyApply,
@@ -60,5 +61,16 @@ describe("loyalty", () => {
     assert.equal(applied.redeemCents, 400);
     assert.equal(applied.dueCents, 1100);
     assert.equal(applied.earnedPoints, 11);
+  });
+});
+
+describe("time clock", () => {
+  it("counts hours between in and out, or now if still open", () => {
+    const inn = new Date("2026-09-12T09:00:00Z");
+    const out = new Date("2026-09-12T17:30:00Z");
+    const now = new Date("2026-09-12T10:00:00Z");
+    assert.equal(clockHours(inn, out, now), 8.5);
+    assert.equal(clockHours(inn, null, now), 1);
+    assert.equal(clockHours(inn, new Date("2026-09-12T08:00:00Z"), now), 0);
   });
 });
