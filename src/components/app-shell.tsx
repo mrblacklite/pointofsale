@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 
-const NAV: Array<{ to: string; label: string; icon: typeof LayoutDashboard; perm: Permission }> = [
+const NAV: Array<{ to: string; label: string; icon: typeof LayoutDashboard; perm: Permission | "account" }> = [
   { to: "/", label: "Overview", icon: LayoutDashboard, perm: "sales" },
   { to: "/pos", label: "Register", icon: ShoppingCart, perm: "pos" },
   { to: "/products", label: "Catalog", icon: Package, perm: "catalog" },
@@ -32,6 +32,7 @@ const NAV: Array<{ to: string; label: string; icon: typeof LayoutDashboard; perm
   { to: "/discounts", label: "Discounts", icon: Tag, perm: "discounts" },
   { to: "/gift-cards", label: "Gift cards", icon: Gift, perm: "gift_cards" },
   { to: "/staff", label: "Staff", icon: Users, perm: "staff" },
+  { to: "/customers", label: "Customers", icon: Users, perm: "staff" },
   { to: "/developers", label: "API", icon: KeyRound, perm: "api_keys" },
   { to: "/settings", label: "Store", icon: Settings, perm: "settings" },
 ];
@@ -70,10 +71,10 @@ export function AppShell({
   }
 
   const role = session.data?.member.role;
-  const items = NAV.filter((item) => {
-    if (item.to === "/") return true;
-    return role ? can(role, item.perm) : false;
-  });
+  const items =
+    role === "customer"
+      ? [{ to: "/", label: "Account", icon: LayoutDashboard, perm: "sales" as const }]
+      : NAV.filter((item) => (role ? item.perm === "account" || can(role, item.perm as Permission) : false));
 
   const nav = (
     <nav className="flex flex-1 flex-col gap-1 p-3">
