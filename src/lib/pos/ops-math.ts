@@ -80,3 +80,13 @@ export function clockHours(clockedInAt: Date, clockedOutAt: Date | null, now: Da
   if (!Number.isFinite(ms) || ms <= 0) return 0;
   return ms / 3_600_000;
 }
+
+export function returnableQty(sold: number, alreadyReturned: number) {
+  return Math.max(0, Math.trunc(sold) - Math.max(0, Math.trunc(alreadyReturned)));
+}
+
+export function lineRefundCents(lineTotalCents: number, soldQty: number, returnQty: number) {
+  if (!Number.isFinite(lineTotalCents) || soldQty <= 0 || returnQty <= 0) return 0;
+  const q = Math.min(Math.trunc(returnQty), Math.trunc(soldQty));
+  return Math.round((lineTotalCents * q) / soldQty);
+}

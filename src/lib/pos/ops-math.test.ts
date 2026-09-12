@@ -6,9 +6,11 @@ import {
   cycleCountDelta,
   discountWindowOpen,
   giftCardUsable,
+  lineRefundCents,
   loyaltyApply,
   loyaltyEarnPoints,
   loyaltyRedeemCents,
+  returnableQty,
   shiftDifference,
   shiftExpected,
   stockFlag,
@@ -88,5 +90,15 @@ describe("time clock", () => {
     assert.equal(clockHours(inn, out, now), 8.5);
     assert.equal(clockHours(inn, null, now), 1);
     assert.equal(clockHours(inn, new Date("2026-09-12T08:00:00Z"), now), 0);
+  });
+});
+
+describe("returns", () => {
+  it("caps returnable qty and prorates line totals", () => {
+    assert.equal(returnableQty(3, 1), 2);
+    assert.equal(returnableQty(3, 3), 0);
+    assert.equal(lineRefundCents(1000, 4, 1), 250);
+    assert.equal(lineRefundCents(1000, 4, 4), 1000);
+    assert.equal(lineRefundCents(1000, 4, 0), 0);
   });
 });
