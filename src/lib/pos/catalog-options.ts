@@ -51,3 +51,22 @@ export const deleteProductOption = createServerFn({ method: "POST" })
     await sql`delete from product_options where id = ${data.id} and store_id = ${store.id}`;
     return { ok: true };
   });
+
+export const saveProductMeta = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    z.object({
+      id: z.string(),
+      soldBy: z.enum(["each", "weight"]),
+      imageUrl: z.string().trim().max(500).nullable().optional(),
+    }),
+  )
+  .handler(async ({ context, data }) => {
+    const { sql, store } = await requirePos(context.userId, "catalog_write");
+    await sql`
+      update products
+      set sold_by = ${data.soldBy}, image_url = ${data.imageUrl ?? null}, updated_at = now()
+      where id = ${data.id} and store_id = ${store.id}
+    `;
+    return { id: data.id };
+  });
