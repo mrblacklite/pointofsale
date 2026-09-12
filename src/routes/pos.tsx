@@ -4,6 +4,7 @@ import { Minus, Plus, Search, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AppShell, Forbidden, usePosSession } from "@/components/app-shell";
+import { HeldTickets } from "@/components/held-tickets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -219,6 +220,23 @@ function Register() {
               </Chip>
             ))}
           </div>
+          <HeldTickets
+            cart={cart}
+            discountCode={discountCode}
+            onParked={() => {
+              setCart([]);
+              setDiscountCode("");
+              setGiftCode("");
+              setGiftCents(0);
+              setTendered("");
+            }}
+            onResume={(payload) => {
+              setCart(payload.cart);
+              setDiscountCode(payload.discountCode);
+              setGiftCode("");
+              setGiftCents(0);
+            }}
+          />
           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
             {products.data?.map((p) => (
               <button
@@ -243,24 +261,17 @@ function Register() {
         </div>
         <div className="hidden lg:block">{ticket}</div>
       </div>
-
       {mobileTicket ? (
         <div className="fixed inset-0 z-40 bg-ink/40 lg:hidden" onClick={() => setMobileTicket(false)}>
-          <div
-            className="absolute inset-x-0 bottom-0 max-h-[90dvh] overflow-y-auto rounded-t-xl bg-card p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="absolute inset-x-0 bottom-0 max-h-[90dvh] overflow-y-auto rounded-t-xl bg-card p-4" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-xl">Ticket</h2>
-              <Button variant="ghost" size="icon-sm" onClick={() => setMobileTicket(false)}>
-                <X />
-              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={() => setMobileTicket(false)}><X /></Button>
             </div>
             {ticket}
           </div>
         </div>
       ) : null}
-
       <Dialog open={Boolean(receipt)} onOpenChange={(o) => !o && setReceipt(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -271,56 +282,15 @@ function Register() {
             <div className="font-mono text-sm">
               {receipt.items.map((i) => (
                 <div key={i.sku} className="flex justify-between py-1">
-                  <span>
-                    {i.quantity} × {i.name}
-                  </span>
+                  <span>{i.quantity} × {i.name}</span>
                   <span>{formatMoney(i.lineTotalCents)}</span>
                 </div>
               ))}
-              <div className="mt-3 flex justify-between border-t border-border pt-2">
-                <span>Tax</span>
-                <span>{formatMoney(receipt.taxCents)}</span>
-              </div>
-              {receipt.discountCents ? (
-                <div className="flex justify-between text-primary">
-                  <span>Discount</span>
-                  <span>-{formatMoney(receipt.discountCents)}</span>
-                </div>
-              ) : null}
-              <div className="mt-1 flex justify-between text-base font-medium">
-                <span>Total</span>
-                <span>{formatMoney(receipt.totalCents)}</span>
-              </div>
-              {receipt.changeCents > 0 ? (
-                <div className="mt-1 flex justify-between">
-                  <span>Change</span>
-                  <span>{formatMoney(receipt.changeCents)}</span>
-                </div>
-              ) : null}
+              <div className="mt-3 flex justify-between border-t border-border pt-2"><span>Tax</span><span>{formatMoney(receipt.taxCents)}</span></div>
+              {receipt.discountCents ? <div className="flex justify-between text-primary"><span>Discount</span><span>-{formatMoney(receipt.discountCents)}</span></div> : null}
+              <div className="mt-1 flex justify-between text-base font-medium"><span>Total</span><span>{formatMoney(receipt.totalCents)}</span></div>
+              {receipt.changeCents > 0 ? <div className="mt-1 flex justify-between"><span>Change</span><span>{formatMoney(receipt.changeCents)}</span></div> : null}
               <p className="mt-4 text-center text-xs text-muted-foreground">{receipt.receiptFooter}</p>
-              <Button
-                variant="outline"
-                className="mt-4 w-full"
-                onClick={() => {
-                  const w = window.open("", "receipt", "width=360,height=640");
-                  if (!w) return;
-                  w.document.write(`<!doctype html><title>Ticket ${receipt.receiptNumber}</title>
-<style>body{font-family:ui-monospace,Menlo,monospace;padding:24px;color:#1c1915}h1{font-size:16px}row{display:flex;justify-content:space-between}</style>
-<h1>${receipt.storeName}</h1>
-<p>Ticket #${receipt.receiptNumber}<br>${receipt.cashierName}</p>
-${receipt.items.map((i) => `<p style="display:flex;justify-content:space-between"><span>${i.quantity} × ${i.name}</span><span>${formatMoney(i.lineTotalCents)}</span></p>`).join("")}
-<p style="display:flex;justify-content:space-between"><span>Tax</span><span>${formatMoney(receipt.taxCents)}</span></p>
-${receipt.discountCents ? `<p style="display:flex;justify-content:space-between"><span>Discount</span><span>-${formatMoney(receipt.discountCents)}</span></p>` : ""}
-<p style="display:flex;justify-content:space-between;font-weight:600"><span>Total</span><span>${formatMoney(receipt.totalCents)}</span></p>
-${receipt.changeCents ? `<p>Change ${formatMoney(receipt.changeCents)}</p>` : ""}
-<p style="text-align:center;margin-top:24px">${receipt.receiptFooter ?? ""}</p>`);
-                  w.document.close();
-                  w.focus();
-                  w.print();
-                }}
-              >
-                Print receipt
-              </Button>
             </div>
           ) : null}
         </DialogContent>
@@ -329,24 +299,9 @@ ${receipt.changeCents ? `<p>Change ${formatMoney(receipt.changeCents)}</p>` : ""
   );
 }
 
-function Chip({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean;
-  children: React.ReactNode;
-  onClick: () => void;
-}) {
+function Chip({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "h-9 shrink-0 rounded-full px-3 text-sm",
-        active ? "bg-ink text-paper" : "bg-secondary text-foreground",
-      )}
-    >
+    <button type="button" onClick={onClick} className={cn("h-9 shrink-0 rounded-full px-3 text-sm", active ? "bg-ink text-paper" : "bg-secondary text-foreground")}>
       {children}
     </button>
   );
@@ -383,15 +338,12 @@ function Ticket(props: {
     const options = [due, Math.ceil(due / 500) * 500, Math.ceil(due / 1000) * 1000, due + 500];
     return [...new Set(options.filter((n) => n >= due))].slice(0, 4);
   }, [props.due]);
-
   return (
     <aside className="flex flex-col rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <h2 className="font-display text-lg">Ticket</h2>
         {props.cart.length ? (
-          <button type="button" className="text-xs text-muted-foreground hover:text-destructive" onClick={props.clear}>
-            Clear
-          </button>
+          <button type="button" className="text-xs text-muted-foreground hover:text-destructive" onClick={props.clear}>Clear</button>
         ) : null}
       </div>
       <div className="min-h-40 flex-1 space-y-2 p-3">
@@ -405,13 +357,9 @@ function Ticket(props: {
                 <div className="font-mono text-xs text-muted-foreground">{formatMoney(l.product.priceCents)}</div>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon-sm" className="size-8" onClick={() => props.setQty(l.product.id, l.quantity - 1)}>
-                  {l.quantity === 1 ? <Trash2 /> : <Minus />}
-                </Button>
+                <Button variant="ghost" size="icon-sm" className="size-8" onClick={() => props.setQty(l.product.id, l.quantity - 1)}>{l.quantity === 1 ? <Trash2 /> : <Minus />}</Button>
                 <span className="w-6 text-center font-mono text-sm tabular-nums">{l.quantity}</span>
-                <Button variant="ghost" size="icon-sm" className="size-8" onClick={() => props.setQty(l.product.id, l.quantity + 1)}>
-                  <Plus />
-                </Button>
+                <Button variant="ghost" size="icon-sm" className="size-8" onClick={() => props.setQty(l.product.id, l.quantity + 1)}><Plus /></Button>
               </div>
             </div>
           ))
@@ -421,77 +369,38 @@ function Ticket(props: {
         <div className="grid grid-cols-2 gap-2">
           <div>
             <Label className="text-xs text-muted-foreground">Discount code</Label>
-            <Input
-              className="h-9 uppercase"
-              value={props.discountCode}
-              onChange={(e) => props.setDiscountCode(e.target.value.toUpperCase())}
-              placeholder="WELCOME10"
-            />
+            <Input className="h-9 uppercase" value={props.discountCode} onChange={(e) => props.setDiscountCode(e.target.value.toUpperCase())} placeholder="WELCOME10" />
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Gift card</Label>
             <div className="flex gap-1">
-              <Input
-                className="h-9 uppercase"
-                value={props.giftCode}
-                onChange={(e) => props.setGiftCode(e.target.value.toUpperCase())}
-                placeholder="TILL-2500"
-              />
-              <Button variant="outline" size="sm" className="h-9" onClick={props.onLookup} disabled={props.looking}>
-                Use
-              </Button>
+              <Input className="h-9 uppercase" value={props.giftCode} onChange={(e) => props.setGiftCode(e.target.value.toUpperCase())} placeholder="TILL-2500" />
+              <Button variant="outline" size="sm" className="h-9" onClick={props.onLookup} disabled={props.looking}>Use</Button>
             </div>
           </div>
         </div>
-        {props.giftCents > 0 ? (
-          <Badge>Gift card {formatMoney(props.giftCents)} available</Badge>
-        ) : null}
+        {props.giftCents > 0 ? <Badge>Gift card {formatMoney(props.giftCents)} available</Badge> : null}
         <div className="space-y-1 font-mono text-sm tabular-nums">
           <Row k="Subtotal" v={formatMoney(props.subtotal)} />
-          {props.discountCents > 0 ? (
-            <Row k="Discount" v={`-${formatMoney(props.discountCents)}`} />
-          ) : props.discountCode.trim() ? (
-            <p className="text-xs text-warn">Code doesn’t apply to this ticket yet.</p>
-          ) : null}
+          {props.discountCents > 0 ? <Row k="Discount" v={`-${formatMoney(props.discountCents)}`} /> : props.discountCode.trim() ? <p className="text-xs text-warn">Code doesn’t apply to this ticket yet.</p> : null}
           <Row k={`Tax ${props.taxLabel}`} v={formatMoney(props.tax)} />
           {props.giftApplied > 0 ? <Row k="Gift card" v={`-${formatMoney(props.giftApplied)}`} /> : null}
           <Row k="Due" v={formatMoney(props.due)} strong />
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <Button variant={props.method === "card" ? "default" : "outline"} onClick={() => props.setMethod("card")}>
-            Card
-          </Button>
-          <Button variant={props.method === "cash" ? "default" : "outline"} onClick={() => props.setMethod("cash")}>
-            Cash
-          </Button>
+          <Button variant={props.method === "card" ? "default" : "outline"} onClick={() => props.setMethod("card")}>Card</Button>
+          <Button variant={props.method === "cash" ? "default" : "outline"} onClick={() => props.setMethod("cash")}>Cash</Button>
         </div>
         {props.method === "cash" ? (
           <div>
             <Label className="text-xs text-muted-foreground">Tendered</Label>
-            <Input
-              className="h-11 font-mono"
-              inputMode="decimal"
-              value={props.tendered}
-              onChange={(e) => props.setTendered(e.target.value)}
-              placeholder={(props.due / 100).toFixed(2)}
-            />
+            <Input className="h-11 font-mono" inputMode="decimal" value={props.tendered} onChange={(e) => props.setTendered(e.target.value)} placeholder={(props.due / 100).toFixed(2)} />
             <div className="mt-2 flex flex-wrap gap-1">
               {quick.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className="rounded-full bg-secondary px-2.5 py-1 text-xs"
-                  onClick={() => props.setTendered((c / 100).toFixed(2))}
-                >
-                  {formatMoney(c)}
-                </button>
+                <button key={c} type="button" className="rounded-full bg-secondary px-2.5 py-1 text-xs" onClick={() => props.setTendered((c / 100).toFixed(2))}>{formatMoney(c)}</button>
               ))}
             </div>
-            {props.change > 0 ? (
-              <p className="mt-2 text-sm">
-                Change <span className="font-mono tabular-nums">{formatMoney(props.change)}</span>
-              </p>
-            ) : null}
+            {props.change > 0 ? <p className="mt-2 text-sm">Change <span className="font-mono tabular-nums">{formatMoney(props.change)}</span></p> : null}
           </div>
         ) : null}
         <Button className="w-full" size="lg" disabled={!props.cart.length || props.paying} onClick={props.onPay}>
