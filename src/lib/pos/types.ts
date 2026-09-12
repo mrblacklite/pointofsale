@@ -48,6 +48,8 @@ export type Product = {
   quantity: number;
   reorderPoint: number;
   active: boolean;
+  soldBy: "each" | "weight";
+  imageUrl: string | null;
 };
 
 export type Discount = {
@@ -131,6 +133,7 @@ export type DashboardData = {
 export type CartLineInput = {
   productId: string;
   quantity: number;
+  optionIds?: string[];
 };
 
 export type CompleteSaleInput = {
@@ -196,7 +199,6 @@ export type ApiKeyRow = {
   keyPrefix: string;
   lastUsedAt: string | null;
   createdAt: string;
-  revoked: boolean;
 };
 
 export type Movement = {
