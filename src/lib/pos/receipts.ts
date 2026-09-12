@@ -1,5 +1,3 @@
-import { newId } from "@/lib/utils";
-
 export type ReceiptChannel = "email" | "sms";
 
 export type ReceiptPayload = {
@@ -14,6 +12,10 @@ export type ReceiptPayload = {
 
 function env(name: string) {
   return (process.env[name] || "").trim();
+}
+
+function newId() {
+  return crypto.randomUUID();
 }
 
 function money(cents: number, currency = "USD") {
@@ -41,7 +43,7 @@ export async function deliverReceipt(opts: {
 }): Promise<{ status: "sent" | "simulated" | "failed"; provider: string; providerRef: string | null; error: string | null }> {
   const dest = opts.destination.trim();
   if (opts.channel === "email") {
-    if (!/[^\s@]+@[^\s@]+\.[^\s@]+/.test(dest)) throw new Error("Invalid email address.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dest)) throw new Error("Invalid email address.");
     return sendEmail(dest, opts.payload);
   }
   const phone = dest.replace(/[^\d+]/g, "");
