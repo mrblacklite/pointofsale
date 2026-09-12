@@ -90,3 +90,7 @@ export function lineRefundCents(lineTotalCents: number, soldQty: number, returnQ
   const q = Math.min(Math.trunc(returnQty), Math.trunc(soldQty));
   return Math.round((lineTotalCents * q) / soldQty);
 }
+
+export function poOpenQty(ordered: number, received: number) {
+  return Math.max(0, Math.trunc(ordered) - Math.max(0, Math.trunc(received)));
+}

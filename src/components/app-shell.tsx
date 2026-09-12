@@ -12,6 +12,7 @@ import {
   Settings,
   ShoppingCart,
   Tag,
+  Truck,
   Users,
   X,
 } from "lucide-react";
@@ -30,6 +31,7 @@ const NAV: Array<{ to: string; label: string; icon: typeof LayoutDashboard; perm
   { to: "/time-clock", label: "Time clock", icon: Clock, perm: "sales" },
   { to: "/products", label: "Catalog", icon: Package, perm: "catalog" },
   { to: "/inventory", label: "Inventory", icon: Boxes, perm: "inventory" },
+  { to: "/purchasing", label: "Purchasing", icon: Truck, perm: "inventory" },
   { to: "/sales", label: "Sales", icon: Receipt, perm: "sales" },
   { to: "/discounts", label: "Discounts", icon: Tag, perm: "discounts" },
   { to: "/gift-cards", label: "Gift cards", icon: Gift, perm: "gift_cards" },
