@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   Boxes,
+  Clock,
   Gift,
   KeyRound,
   LayoutDashboard,
@@ -26,6 +27,7 @@ import { Skeleton } from "./ui/skeleton";
 const NAV: Array<{ to: string; label: string; icon: typeof LayoutDashboard; perm: Permission | "account" }> = [
   { to: "/", label: "Overview", icon: LayoutDashboard, perm: "sales" },
   { to: "/pos", label: "Register", icon: ShoppingCart, perm: "pos" },
+  { to: "/time-clock", label: "Time clock", icon: Clock, perm: "sales" },
   { to: "/products", label: "Catalog", icon: Package, perm: "catalog" },
   { to: "/inventory", label: "Inventory", icon: Boxes, perm: "inventory" },
   { to: "/sales", label: "Sales", icon: Receipt, perm: "sales" },
@@ -118,12 +120,7 @@ export function AppShell({
 
       {open ? (
         <div className="fixed inset-0 z-40 md:hidden">
-          <button
-            type="button"
-            className="absolute inset-0 bg-ink/40"
-            aria-label="Close menu"
-            onClick={() => setOpen(false)}
-          />
+          <button type="button" className="absolute inset-0 bg-ink/40" aria-label="Close menu" onClick={() => setOpen(false)} />
           <aside className="relative z-50 flex h-full w-64 flex-col bg-sidebar text-sidebar-foreground">
             <div className="flex items-center justify-between px-5 pt-6 pb-4">
               <span className="font-display text-2xl tracking-tight">Till</span>
