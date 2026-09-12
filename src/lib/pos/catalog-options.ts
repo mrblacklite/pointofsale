@@ -3,6 +3,7 @@ import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { newId } from "@/lib/utils";
 import { n, requirePos } from "./context";
+import type { Product } from "./types";
 
 export const listProductOptions = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
@@ -69,4 +70,47 @@ export const saveProductMeta = createServerFn({ method: "POST" })
       where id = ${data.id} and store_id = ${store.id}
     `;
     return { id: data.id };
+  });
+
+export const listRegisterProducts = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator(z.object({ q: z.string().optional(), categoryId: z.string().optional() }).optional())
+  .handler(async ({ context, data }): Promise<Product[]> => {
+    const { sql, store } = await requirePos(context.userId);
+    const q = data?.q?.trim() ?? "";
+    const categoryId = data?.categoryId || null;
+    const rows = await sql<Record<string, unknown>>`
+      select p.*, c.name as category_name
+      from products p
+      left join categories c on c.id = p.category_id
+      where p.store_id = ${store.id}
+        and p.active = true
+        and (${categoryId}::text is null or p.category_id = ${categoryId})
+        and (
+          ${q} = ''
+          or p.name ilike ${"%" + q + "%"}
+          or p.sku ilike ${"%" + q + "%"}
+          or coalesce(p.barcode, '') ilike ${"%" + q + "%"}
+        )
+      order by p.name
+      limit 200
+    `;
+    return rows.map((row) => ({
+      id: String(row.id),
+      categoryId: row.category_id ? String(row.category_id) : null,
+      categoryName: row.category_name ? String(row.category_name) : null,
+      sku: String(row.sku),
+      barcode: row.barcode ? String(row.barcode) : null,
+      name: String(row.name),
+      description: row.description ? String(row.description) : null,
+      priceCents: n(row.price_cents),
+      costCents: n(row.cost_cents),
+      taxExempt: Boolean(row.tax_exempt),
+      trackInventory: Boolean(row.track_inventory),
+      quantity: n(row.quantity),
+      reorderPoint: n(row.reorder_point),
+      active: Boolean(row.active),
+      soldBy: row.sold_by === "weight" ? "weight" : "each",
+      imageUrl: row.image_url ? String(row.image_url) : null,
+    }));
   });
