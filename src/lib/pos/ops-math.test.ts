@@ -10,6 +10,7 @@ import {
   loyaltyApply,
   loyaltyEarnPoints,
   loyaltyRedeemCents,
+  poOpenQty,
   returnableQty,
   shiftDifference,
   shiftExpected,
@@ -100,5 +101,13 @@ describe("returns", () => {
     assert.equal(lineRefundCents(1000, 4, 1), 250);
     assert.equal(lineRefundCents(1000, 4, 4), 1000);
     assert.equal(lineRefundCents(1000, 4, 0), 0);
+  });
+});
+
+describe("purchasing", () => {
+  it("open PO qty is ordered minus received", () => {
+    assert.equal(poOpenQty(12, 0), 12);
+    assert.equal(poOpenQty(12, 12), 0);
+    assert.equal(poOpenQty(12, 20), 0);
   });
 });
